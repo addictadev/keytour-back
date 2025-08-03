@@ -1,0 +1,2063 @@
+{
+  "info": {
+    "name": "KeyTour RBAC System V2",
+    "description": "Comprehensive test collection for KeyTour RBAC System V2\n\nThis collection includes:\n- Authentication flow with JWT tokens\n- Staff management operations\n- Role and permission management\n- Permission testing scenarios\n- Token management\n- Error handling tests\n\nEnvironment Variables Required:\n- baseUrl: http://localhost:3000\n- accessToken: (auto-set by login)\n- refreshToken: (auto-set by login)\n- userId: (auto-set by login)\n- staffId: (auto-set by staff creation)\n- roleId: (auto-set by role creation)\n- permissionId: (auto-set by permission creation)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "keytour-rbac-v2"
+  },
+  "item": [
+    {
+      "name": "🏥 Health & Setup",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "info"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Initialize RBAC System",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/rbac/initialize",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "rbac", "initialize"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login (Super Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.environment.set('accessToken', response.data.accessToken);",
+                  "        pm.environment.set('userId', response.data.staff._id);",
+                  "        console.log('Access token and user ID saved to environment');",
+                  "    }",
+                  "    if (response.data && response.data.refreshToken) {",
+                  "        pm.environment.set('refreshToken', response.data.refreshToken);",
+                  "        console.log('Refresh token saved to environment');",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Access token received', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@keytour.com\",\n  \"password\": \"Admin123!\",\n  \"rememberMe\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Super\",\n  \"lastName\": \"Administrator\",\n  \"phone\": \"+1-555-0100\",\n  \"timezone\": \"UTC\",\n  \"language\": \"en\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.environment.set('accessToken', response.data.accessToken);",
+                  "        console.log('New access token saved to environment');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "refresh"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Admin123!\",\n  \"newPassword\": \"NewAdmin123!\",\n  \"confirmPassword\": \"NewAdmin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "change-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/auth/logout-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "auth", "logout-all"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔑 RBAC Management",
+      "item": [
+        {
+          "name": "📋 Permissions",
+          "item": [
+            {
+              "name": "Get All Permissions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/permissions?page=1&limit=50&search=",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "permissions"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Permission",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    if (response.data && response.data.permission) {",
+                      "        pm.environment.set('permissionId', response.data.permission._id);",
+                      "        console.log('Permission ID saved to environment');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"manage:analytics\",\n  \"description\": \"Permission to manage analytics and reporting\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/permissions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "permissions"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Permission",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Updated: Permission to manage analytics and advanced reporting\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/permissions/{{permissionId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "permissions", "{{permissionId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Bulk Create Permissions",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"permissions\": [\n    {\n      \"name\": \"create:campaigns\",\n      \"description\": \"Create marketing campaigns\"\n    },\n    {\n      \"name\": \"manage:campaigns\",\n      \"description\": \"Manage marketing campaigns\"\n    },\n    {\n      \"name\": \"view:analytics\",\n      \"description\": \"View analytics dashboard\"\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/permissions/bulk",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "permissions", "bulk"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Permission Statistics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/permissions/statistics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "permissions", "statistics"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Permission",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/permissions/{{permissionId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "permissions", "{{permissionId}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "👥 Roles",
+          "item": [
+            {
+              "name": "Get All Roles",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles?page=1&limit=20&includePermissions=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "includePermissions",
+                      "value": "true"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Role",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    if (response.data && response.data.role) {",
+                      "        pm.environment.set('roleId', response.data.role._id);",
+                      "        console.log('Role ID saved to environment');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Marketing Manager\",\n  \"description\": \"Manages marketing campaigns and analytics\",\n  \"permissions\": []\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Role by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles/{{roleId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles", "{{roleId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Role",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Updated: Manages marketing campaigns, analytics, and customer engagement\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles/{{roleId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles", "{{roleId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Add Permissions to Role",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"permissions\": [\"{{permissionId}}\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles/{{roleId}}/permissions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles", "{{roleId}}", "permissions"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Remove Permissions from Role",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"permissions\": [\"{{permissionId}}\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles/{{roleId}}/permissions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles", "{{roleId}}", "permissions"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Bulk Create Roles",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"roles\": [\n    {\n      \"name\": \"Sales Representative\",\n      \"description\": \"Handles customer sales and inquiries\",\n      \"permissions\": []\n    },\n    {\n      \"name\": \"Data Analyst\",\n      \"description\": \"Analyzes business data and creates reports\",\n      \"permissions\": []\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles/bulk",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles", "bulk"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Role Statistics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles/statistics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles", "statistics"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Role",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles/{{roleId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles", "{{roleId}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "🔍 Permission Checking",
+          "item": [
+            {
+              "name": "Check Single Permission",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"permission\": \"create:staff\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/check-permission",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "check-permission"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Check Any Permission",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"permissions\": [\"create:staff\", \"update:staff\", \"read:staff\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/check-any-permission",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "check-any-permission"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Check All Permissions",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"permissions\": [\"create:staff\", \"read:staff\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/check-all-permissions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "check-all-permissions"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get User Permissions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/user/{{userId}}/permissions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "user", "{{userId}}", "permissions"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Assign Role to Staff",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"staffId\": \"{{staffId}}\",\n  \"roleId\": \"{{roleId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/assign-role",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "assign-role"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "📊 System Overview",
+          "item": [
+            {
+              "name": "Get RBAC Overview",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/overview",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "overview"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 Staff Management",
+      "item": [
+        {
+          "name": "Get All Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff?page=1&limit=20&search=&department=&isActive=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "department",
+                  "value": ""
+                },
+                {
+                  "key": "isActive",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Staff Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.staff) {",
+                  "        pm.environment.set('staffId', response.data.staff._id);",
+                  "        console.log('Staff ID saved to environment');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Get a role ID for the new staff member",
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('baseUrl') + '/api/v2/rbac/roles?limit=1',",
+                  "    method: 'GET',",
+                  "    header: {",
+                  "        'Authorization': 'Bearer ' + pm.environment.get('accessToken')",
+                  "    }",
+                  "}, function (err, response) {",
+                  "    if (!err && response.json().data && response.json().data.roles.length > 0) {",
+                  "        pm.environment.set('availableRoleId', response.json().data.roles[0]._id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@keytour.com\",\n  \"password\": \"StaffPass123!\",\n  \"phone\": \"+1-555-0101\",\n  \"role\": \"{{availableRoleId}}\",\n  \"department\": \"IT\",\n  \"employeeId\": \"EMP001\",\n  \"position\": \"Software Developer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Staff Member",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"phone\": \"+1-555-0102\",\n  \"position\": \"Senior Software Developer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Block Staff Member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isBlocked\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}/block",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}", "block"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unblock Staff Member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isBlocked\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}/block",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}", "block"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Staff Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"NewStaffPass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}", "reset-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Role to Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{roleId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}/assign-role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}", "assign-role"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}", "sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}", "permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Staff Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission\": \"read:tours\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}/check-permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}", "check-permission"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/search?q=john&department=IT&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "john"
+                },
+                {
+                  "key": "department",
+                  "value": "IT"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "statistics"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export Staff Data (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/export?format=json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export Staff Data (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/export?format=csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Operations - Block Multiple Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation\": \"block\",\n  \"staffIds\": [\"{{staffId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "bulk"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Staff Member",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "staff", "{{staffId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Permission Testing Scenarios",
+      "item": [
+        {
+          "name": "Scenario 1: Admin Access Test",
+          "item": [
+            {
+              "name": "Login as Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    if (response.data && response.data.accessToken) {",
+                      "        pm.environment.set('adminToken', response.data.accessToken);",
+                      "        pm.environment.set('adminUserId', response.data.staff._id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@keytour.com\",\n  \"password\": \"Admin123!\",\n  \"rememberMe\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin - Access Staff Management",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/staff",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "staff"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Admin - Access RBAC Management",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Scenario 2: Limited User Access Test",
+          "item": [
+            {
+              "name": "Create Limited User",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// Get Customer Support role ID",
+                      "pm.sendRequest({",
+                      "    url: pm.environment.get('baseUrl') + '/api/v2/rbac/roles?search=Customer Support',",
+                      "    method: 'GET',",
+                      "    header: {",
+                      "        'Authorization': 'Bearer ' + pm.environment.get('accessToken')",
+                      "    }",
+                      "}, function (err, response) {",
+                      "    if (!err && response.json().data && response.json().data.roles.length > 0) {",
+                      "        pm.environment.set('customerSupportRoleId', response.json().data.roles[0]._id);",
+                      "    }",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    if (response.data && response.data.staff) {",
+                      "        pm.environment.set('limitedUserId', response.data.staff._id);",
+                      "        pm.environment.set('limitedUserEmail', response.data.staff.email);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Support\",\n  \"lastName\": \"Agent\",\n  \"email\": \"support@keytour.com\",\n  \"password\": \"Support123!\",\n  \"phone\": \"+1-555-0200\",\n  \"role\": \"{{customerSupportRoleId}}\",\n  \"department\": \"Customer Support\",\n  \"employeeId\": \"SUP001\",\n  \"position\": \"Customer Support Agent\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/staff",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "staff"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login as Limited User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    if (response.data && response.data.accessToken) {",
+                      "        pm.environment.set('limitedToken', response.data.accessToken);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{limitedUserEmail}}\",\n  \"password\": \"Support123!\",\n  \"rememberMe\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Limited User - Try Staff Management (Should Fail)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Access denied for limited user', function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{limitedToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/staff",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "staff"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Limited User - Try Creating Role (Should Fail)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Access denied for role creation', function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{limitedToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Role\",\n  \"description\": \"Should not be created\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/roles",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "roles"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Limited User - Access Own Profile (Should Work)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Profile access successful', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{limitedToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/auth/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "auth", "profile"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Scenario 3: Token Security Tests",
+          "item": [
+            {
+              "name": "Access with Invalid Token (Should Fail)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Invalid token rejected', function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer invalid.token.here",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/auth/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "auth", "profile"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Access without Token (Should Fail)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('No token rejected', function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/staff",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "staff"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Verify Token After Logout (Should Fail)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// First logout to invalidate the token",
+                      "pm.sendRequest({",
+                      "    url: pm.environment.get('baseUrl') + '/api/v2/auth/logout',",
+                      "    method: 'POST',",
+                      "    header: {",
+                      "        'Authorization': 'Bearer ' + pm.environment.get('limitedToken'),",
+                      "        'Content-Type': 'application/json'",
+                      "    },",
+                      "    body: {",
+                      "        mode: 'raw',",
+                      "        raw: JSON.stringify({",
+                      "            refreshToken: pm.environment.get('refreshToken')",
+                      "        })",
+                      "    }",
+                      "}, function (err, response) {",
+                      "    console.log('Logout completed');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Token invalid after logout', function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{limitedToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/auth/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "auth", "profile"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🚨 Error Handling Tests",
+      "item": [
+        {
+          "name": "Invalid Input Tests",
+          "item": [
+            {
+              "name": "Login with Invalid Email",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Invalid email rejected', function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"invalid@email.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Staff with Invalid Data",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Validation error returned', function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"\",\n  \"email\": \"invalid-email\",\n  \"password\": \"123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/staff",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "staff"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Permission with Invalid Format",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Invalid permission format rejected', function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"invalid_permission_format\",\n  \"description\": \"This should fail\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/rbac/permissions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "rbac", "permissions"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Rate Limiting Tests",
+          "item": [
+            {
+              "name": "Multiple Failed Login Attempts",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// After multiple attempts, should get rate limited",
+                      "if (pm.info.iteration > 5) {",
+                      "    pm.test('Rate limit applied', function () {",
+                      "        pm.expect(pm.response.code).to.be.oneOf([401, 429]);",
+                      "    });",
+                      "} else {",
+                      "    pm.test('Failed login attempt', function () {",
+                      "        pm.response.to.have.status(401);",
+                      "    });",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@keytour.com\",\n  \"password\": \"wrongpassword\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v2/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v2", "auth", "login"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Request: ' + pm.info.requestName);",
+          "",
+          "// Add request timestamp",
+          "pm.environment.set('timestamp', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is reasonable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Log response details",
+          "console.log('Response Status: ' + pm.response.status);",
+          "console.log('Response Time: ' + pm.response.responseTime + 'ms');",
+          "",
+          "// Check for common security headers",
+          "if (pm.response.code === 200) {",
+          "    pm.test('Security headers present', function () {",
+          "        pm.expect(pm.response.headers.get('X-Content-Type-Options')).to.exist;",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
