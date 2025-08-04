@@ -297,9 +297,9 @@ class StaffService {
      */
     static async deleteStaff(staffId, deletedBy) {
         const staff = await Staff.findById(staffId);
-        
-        if (!staff) {
-            throw new CustomError('Staff member not found', 404);
+        console.log("staff", staff);
+        if (staff.isBlocked&&!staff.isActive) {
+            throw new CustomError('Staff member already deactivated', 404);
         }
 
         // Prevent self-deletion
