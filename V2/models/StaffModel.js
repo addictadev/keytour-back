@@ -63,7 +63,7 @@ const staffSchema = new mongoose.Schema({
         enum: ['IT', 'Marketing', 'Sales', 'Customer Support', 'Content', 'Finance', 'HR', 'Operations'],
         required: [true, 'Department is required']
     },
-    
+     
     // Employment Information
     employeeId: {
         type: String,

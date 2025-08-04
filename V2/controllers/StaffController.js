@@ -127,7 +127,8 @@ class StaffController {
         }
 
         const deletedBy = req.user._id;
-        await StaffService.deleteStaff(id, deletedBy);
+      const result  = await StaffService.deleteStaff(id, deletedBy);
+      console.log(result);
 
         response(res, 200, null, 'Staff member deleted successfully');
     });

@@ -306,17 +306,18 @@ class StaffService {
         if (staffId === deletedBy) {
             throw new CustomError('You cannot delete your own account', 400);
         }
-
+console.log(staffId, deletedBy);
         // Soft delete by deactivating
         await Staff.findByIdAndUpdate(staffId, {
             isActive: false,
             isBlocked: true,
             updatedBy: deletedBy
         });
+        console.log("staffId", deletedBy);
 
         // Revoke all tokens
-        await RefreshToken.revokeAllForUser(staffId, 'staff', 'account_deleted');
-        await TokenBlacklist.blacklistAllForUser(staffId, 'staff', 'account_deleted');
+        await RefreshToken.revokeAllForUser(staffId, 'staff', 'admin_action');
+        await TokenBlacklist.blacklistAllForUser(staffId, 'staff', 'account_suspended');
 
         return true;
     }
