@@ -39,7 +39,7 @@ class AuthService {
         };
 
         const tokenOptions = {
-            expiresIn: options.expiresIn || process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+            expiresIn: options.expiresIn || process.env.JWT_ACCESS_EXPIRES_IN || '100d',
             algorithm: 'HS256',
             issuer: process.env.JWT_ISSUER || 'keytour-api',
             audience: process.env.JWT_AUDIENCE || 'keytour-app'
