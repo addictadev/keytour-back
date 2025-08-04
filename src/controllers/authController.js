@@ -35,7 +35,6 @@ class AuthController {
     try {
       const { email, password, fcmtoken } = req.body;
       const role = req.headers["role"]; // Extract the role from the header
-console.log(role)
       let user, token;
 
       if (role === "vendor") {
