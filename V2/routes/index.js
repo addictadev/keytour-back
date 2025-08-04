@@ -54,35 +54,41 @@ router.use(helmet({
     }
 }));
 
-// CORS configuration
+// CORS configuration - environment-based
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'http://localhost:3001',
-            'https://keytour-admin.vercel.app',
-            // Add your production domains here
-        ];
-        
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
+        // In production, use specific origins
+        if (process.env.NODE_ENV === 'production') {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+            
+            const allowedOrigins = [
+                'http://localhost:3000',
+                'http://localhost:3001',
+                'https://keytour-admin.vercel.app',
+                'https://keytour.com',
+                'https://www.keytour.com',
+                // Add more production domains as needed
+            ];
+            
+            if (allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true);
+            } else {
+                // In production, log the rejected origin for debugging
+                console.warn(`CORS rejected origin: ${origin}`);
+                callback(new Error('Not allowed by CORS'));
+            }
         } else {
-            callback(new Error('Not allowed by CORS'));
+            // In development/test, allow all origins
+            callback(null, true);
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'X-Requested-With',
-        'X-Device-ID',
-        'X-Platform',
-        'X-Browser'
-    ]
+    allowedHeaders:'*',
+    // Handle preflight requests
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 };
 
 router.use(cors(corsOptions));
