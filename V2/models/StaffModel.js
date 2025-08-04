@@ -50,17 +50,11 @@ const staffSchema = new mongoose.Schema({
         match: [/^\+?[\d\s-()]+$/, 'Please enter a valid phone number']
     },
     
-    // Role-Based Access Control (Multiple Roles Support)
-    roles: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Role'
-    }],
-    
-    // Primary role for backward compatibility and default permissions
-    primaryRole: {
+    // Role-Based Access Control (Single Role)
+    role: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Role',
-        required: [true, 'Primary role is required']
+        required: [true, 'Role is required']
     },
     
     // Department/Team Assignment
@@ -165,8 +159,7 @@ const staffSchema = new mongoose.Schema({
 // Indexes for performance optimization
 staffSchema.index({ email: 1 });
 staffSchema.index({ employeeId: 1 });
-staffSchema.index({ primaryRole: 1 });
-staffSchema.index({ roles: 1 });
+staffSchema.index({ role: 1 });
 staffSchema.index({ department: 1 });
 staffSchema.index({ isActive: 1, isBlocked: 1 });
 

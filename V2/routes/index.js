@@ -256,6 +256,14 @@ router.get('/docs', (req, res) => {
                 'POST /rbac/check-permission': 'Check user permission',
                 'POST /rbac/assign-role': 'Assign role to staff member',
                 'POST /rbac/initialize': 'Initialize RBAC system'
+            },
+            'Destination Management': {
+                'GET /destinations': 'Get all destinations (public)',
+                'GET /destinations/:id': 'Get destination by ID (public)',
+                'POST /destinations': 'Create new destination (requires create:destinations)',
+                'PUT /destinations/:id': 'Update destination (requires update:destinations)',
+                'DELETE /destinations/:id': 'Delete destination (requires delete:destinations)',
+                'GET /destinations/with-wishlist/status': 'Get destinations with wishlist status'
             }
         }
     });

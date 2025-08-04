@@ -324,283 +324,17 @@ class RBACService {
             throw new CustomError('Role not found', 404);
         }
 
-        // Set as primary role and add to roles array if not present
-        staff.primaryRole = roleId;
-        if (!staff.roles.includes(roleId)) {
-            staff.roles.push(roleId);
-        }
+        staff.role = roleId;
         staff.updatedBy = assignedBy;
         await staff.save();
 
-        return staff.populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
+        return staff.populate({
+            path: 'role',
+            populate: {
+                path: 'permissions',
+                model: 'Permission'
             }
-        ]);
-    }
-
-    /**
-     * Remove role from staff member
-     * @param {String} staffId - Staff ID
-     * @param {String} roleId - Role ID to remove
-     * @param {String} removedBy - ID of user making the removal
-     * @returns {Object} - Updated staff member
-     */
-    static async removeRoleFromStaff(staffId, roleId, removedBy) {
-        const staff = await Staff.findById(staffId);
-        const role = await Role.findById(roleId);
-
-        if (!staff) {
-            throw new CustomError('Staff member not found', 404);
-        }
-
-        if (!role) {
-            throw new CustomError('Role not found', 404);
-        }
-
-        // Cannot remove primary role
-        if (staff.primaryRole.toString() === roleId) {
-            throw new CustomError('Cannot remove primary role. Set a different primary role first.', 400);
-        }
-
-        // Check if role is assigned
-        const roleIndex = staff.roles.findIndex(r => r.toString() === roleId);
-        if (roleIndex === -1) {
-            throw new CustomError('Role is not assigned to this staff member', 400);
-        }
-
-        // Remove role from roles array
-        staff.roles.splice(roleIndex, 1);
-        staff.updatedBy = removedBy;
-        await staff.save();
-
-        return staff.populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            }
-        ]);
-    }
-
-    /**
-     * Add additional role to staff member
-     * @param {String} staffId - Staff ID
-     * @param {String} roleId - Role ID to add
-     * @param {String} assignedBy - ID of user making the assignment
-     * @returns {Object} - Updated staff member
-     */
-    static async addAdditionalRoleToStaff(staffId, roleId, assignedBy) {
-        const staff = await Staff.findById(staffId);
-        const role = await Role.findById(roleId);
-
-        if (!staff) {
-            throw new CustomError('Staff member not found', 404);
-        }
-
-        if (!role) {
-            throw new CustomError('Role not found', 404);
-        }
-
-        // Check if role is already assigned
-        if (staff.roles.includes(roleId)) {
-            throw new CustomError('Role is already assigned to this staff member', 409);
-        }
-
-        // Add role to roles array
-        staff.roles.push(roleId);
-        staff.updatedBy = assignedBy;
-        await staff.save();
-
-        return staff.populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            }
-        ]);
-    }
-
-    /**
-     * Set primary role for staff member
-     * @param {String} staffId - Staff ID
-     * @param {String} roleId - Role ID to set as primary
-     * @param {String} updatedBy - ID of user making the update
-     * @returns {Object} - Updated staff member
-     */
-    static async setPrimaryRoleForStaff(staffId, roleId, updatedBy) {
-        const staff = await Staff.findById(staffId);
-        const role = await Role.findById(roleId);
-
-        if (!staff) {
-            throw new CustomError('Staff member not found', 404);
-        }
-
-        if (!role) {
-            throw new CustomError('Role not found', 404);
-        }
-
-        // Role must be in the roles array to be set as primary
-        if (!staff.roles.includes(roleId)) {
-            throw new CustomError('Role must be assigned to staff before setting as primary', 400);
-        }
-
-        staff.primaryRole = roleId;
-        staff.updatedBy = updatedBy;
-        await staff.save();
-
-        return staff.populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            }
-        ]);
-    }
-
-    /**
-     * Get all roles for a staff member
-     * @param {String} staffId - Staff ID
-     * @returns {Object} - Staff with all roles and permissions
-     */
-    static async getStaffRoles(staffId) {
-        const staff = await Staff.findById(staffId).populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            }
-        ]);
-
-        if (!staff) {
-            throw new CustomError('Staff member not found', 404);
-        }
-
-        // Get additional roles (all roles except primary)
-        const additionalRoles = staff.roles.filter(
-            role => role._id.toString() !== staff.primaryRole._id.toString()
-        );
-
-        // Combine all permissions from all roles (remove duplicates)
-        const allPermissions = new Set();
-        staff.roles.forEach(role => {
-            role.permissions.forEach(permission => {
-                allPermissions.add(permission.name);
-            });
         });
-
-        return {
-            staff: {
-                _id: staff._id,
-                firstName: staff.firstName,
-                lastName: staff.lastName,
-                email: staff.email,
-                employeeId: staff.employeeId,
-                department: staff.department
-            },
-            primaryRole: staff.primaryRole,
-            additionalRoles: additionalRoles,
-            allPermissions: Array.from(allPermissions)
-        };
-    }
-
-    /**
-     * Bulk assign roles to multiple staff members
-     * @param {Array} assignments - Array of {staffId, roleId, setPrimary} objects
-     * @param {String} assignedBy - ID of user making the assignments
-     * @returns {Object} - Results of bulk operation
-     */
-    static async bulkAssignRoles(assignments, assignedBy) {
-        const results = {
-            successful: [],
-            failed: [],
-            summary: {
-                total: assignments.length,
-                successful: 0,
-                failed: 0
-            }
-        };
-
-        for (const assignment of assignments) {
-            try {
-                const { staffId, roleId, setPrimary = false } = assignment;
-
-                if (setPrimary) {
-                    // Add role and set as primary
-                    await this.addAdditionalRoleToStaff(staffId, roleId, assignedBy);
-                    await this.setPrimaryRoleForStaff(staffId, roleId, assignedBy);
-                } else {
-                    // Just add as additional role
-                    await this.addAdditionalRoleToStaff(staffId, roleId, assignedBy);
-                }
-
-                results.successful.push({
-                    staffId,
-                    roleId,
-                    setPrimary,
-                    status: 'success'
-                });
-                results.summary.successful++;
-
-            } catch (error) {
-                results.failed.push({
-                    staffId: assignment.staffId,
-                    roleId: assignment.roleId,
-                    error: error.message,
-                    status: 'failed'
-                });
-                results.summary.failed++;
-            }
-        }
-
-        return results;
     }
 
     /**
@@ -614,36 +348,20 @@ class RBACService {
      * @returns {Boolean} - Has permission
      */
     static async hasPermission(userId, permission) {
-        const staff = await Staff.findById(userId).populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
+        const staff = await Staff.findById(userId).populate({
+            path: 'role',
+            populate: {
+                path: 'permissions',
+                model: 'Permission'
             }
-        ]);
+        });
 
-        if (!staff || !staff.roles || staff.roles.length === 0) {
+        if (!staff || !staff.role) {
             return false;
         }
 
-        // Get all permissions from all roles
-        const allPermissions = new Set();
-        staff.roles.forEach(role => {
-            role.permissions.forEach(perm => {
-                allPermissions.add(perm.name);
-            });
-        });
-
-        return allPermissions.has(permission);
+        const userPermissions = staff.role.permissions.map(p => p.name);
+        return userPermissions.includes(permission);
     }
 
     /**
@@ -653,36 +371,20 @@ class RBACService {
      * @returns {Boolean} - Has any permission
      */
     static async hasAnyPermission(userId, permissions) {
-        const staff = await Staff.findById(userId).populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
+        const staff = await Staff.findById(userId).populate({
+            path: 'role',
+            populate: {
+                path: 'permissions',
+                model: 'Permission'
             }
-        ]);
+        });
 
-        if (!staff || !staff.roles || staff.roles.length === 0) {
+        if (!staff || !staff.role) {
             return false;
         }
 
-        // Get all permissions from all roles
-        const allPermissions = new Set();
-        staff.roles.forEach(role => {
-            role.permissions.forEach(perm => {
-                allPermissions.add(perm.name);
-            });
-        });
-
-        return permissions.some(permission => allPermissions.has(permission));
+        const userPermissions = staff.role.permissions.map(p => p.name);
+        return permissions.some(permission => userPermissions.includes(permission));
     }
 
     /**
@@ -692,36 +394,20 @@ class RBACService {
      * @returns {Boolean} - Has all permissions
      */
     static async hasAllPermissions(userId, permissions) {
-        const staff = await Staff.findById(userId).populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
+        const staff = await Staff.findById(userId).populate({
+            path: 'role',
+            populate: {
+                path: 'permissions',
+                model: 'Permission'
             }
-        ]);
+        });
 
-        if (!staff || !staff.roles || staff.roles.length === 0) {
+        if (!staff || !staff.role) {
             return false;
         }
 
-        // Get all permissions from all roles
-        const allPermissions = new Set();
-        staff.roles.forEach(role => {
-            role.permissions.forEach(perm => {
-                allPermissions.add(perm.name);
-            });
-        });
-
-        return permissions.every(permission => allPermissions.has(permission));
+        const userPermissions = staff.role.permissions.map(p => p.name);
+        return permissions.every(permission => userPermissions.includes(permission));
     }
 
     /**
@@ -730,36 +416,19 @@ class RBACService {
      * @returns {Array} - Array of permission names
      */
     static async getUserPermissions(userId) {
-        const staff = await Staff.findById(userId).populate([
-            {
-                path: 'primaryRole',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
-            },
-            {
-                path: 'roles',
-                populate: {
-                    path: 'permissions',
-                    model: 'Permission'
-                }
+        const staff = await Staff.findById(userId).populate({
+            path: 'role',
+            populate: {
+                path: 'permissions',
+                model: 'Permission'
             }
-        ]);
+        });
 
-        if (!staff || !staff.roles || staff.roles.length === 0) {
+        if (!staff || !staff.role) {
             return [];
         }
 
-        // Get all unique permissions from all roles
-        const allPermissions = new Set();
-        staff.roles.forEach(role => {
-            role.permissions.forEach(perm => {
-                allPermissions.add(perm.name);
-            });
-        });
-
-        return Array.from(allPermissions);
+        return staff.role.permissions.map(p => p.name);
     }
 
     /**
