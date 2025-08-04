@@ -350,6 +350,33 @@ router.post('/:id/assign-role',
     StaffController.assignRole
 );
 
+/**
+ * @swagger
+ * /api/v2/staff/{id}/remove-role:
+ *   delete:
+ *     summary: Remove role from staff member
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Role removed successfully
+ *       404:
+ *         description: Staff member not found
+ *       400:
+ *         description: Cannot remove role from Super Admin
+ */
+router.delete('/:id/remove-role', 
+    PermissionMiddleware.requirePermissions('update:staff', 'update:roles'),
+    StaffController.removeRole
+);
+
 // ========================================
 // SESSION MANAGEMENT
 // ========================================

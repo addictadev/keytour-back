@@ -200,6 +200,36 @@ class StaffController {
     });
 
     /**
+     * Remove role from staff member
+     * @route DELETE /api/v2/staff/:id/remove-role
+     */
+    static removeRole = catchAsync(async (req, res, next) => {
+        const { id } = req.params;
+
+        if (!id) {
+            return next(new CustomError('Staff ID is required', 400));
+        }
+
+        // Check if staff exists
+        const staff = await StaffService.getById(id);
+        if (!staff) {
+            return next(new CustomError('Staff member not found', 404));
+        }
+
+        // Prevent removing role from Super Admin
+        if (staff.email === 'superadmin@keytour.com') {
+            return next(new CustomError('Cannot remove role from Super Admin', 400));
+        }
+
+        // Remove the role (set to null)
+        staff.role = null;
+        staff.updatedBy = req.user._id;
+        await staff.save();
+
+        response(res, 200, { staff }, 'Role removed successfully');
+    });
+
+    /**
      * Get staff member's active sessions
      * @route GET /api/v2/staff/:id/sessions
      */

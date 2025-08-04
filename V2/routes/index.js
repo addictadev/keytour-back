@@ -246,7 +246,8 @@ router.get('/docs', (req, res) => {
                 'PUT /staff/:id': 'Update staff member',
                 'DELETE /staff/:id': 'Delete staff member',
                 'PATCH /staff/:id/block': 'Block/unblock staff member',
-                'POST /staff/:id/assign-role': 'Assign role to staff member'
+                'POST /staff/:id/assign-role': 'Assign role to staff member',
+                'DELETE /staff/:id/remove-role': 'Remove role from staff member'
             },
             'RBAC System': {
                 'GET /rbac/permissions': 'Get all permissions',
