@@ -228,7 +228,7 @@ class StaffController {
         staff.updatedBy = req.user._id;
         await staff.save({validateBeforeSave: false});
 
-        response(res, 200, { staff }, 'Role removed successfully');
+        response(res, 200, staff , 'Role removed successfully');
     });
 
     /**
