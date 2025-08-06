@@ -12,6 +12,7 @@
  * @author Expert Backend Developer
  * @version 2.0.0
  */
+const Staff = require('../models/StaffModel');
 
 const StaffService = require('../services/StaffService');
 const RBACService = require('../services/RBACService');
@@ -212,7 +213,7 @@ class StaffController {
         }
 
         // Check if staff exists
-        const staff = await StaffService.getById(id);
+        const staff = await Staff.findById(id);
         if (!staff) {
             return next(new CustomError('Staff member not found', 404));
         }
@@ -225,7 +226,7 @@ class StaffController {
         // Remove the role (set to null)
         staff.role = null;
         staff.updatedBy = req.user._id;
-        await staff.save();
+        await staff.save({validateBeforeSave: false});
 
         response(res, 200, { staff }, 'Role removed successfully');
     });
