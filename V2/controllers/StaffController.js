@@ -222,7 +222,9 @@ class StaffController {
         if (staff.email === 'superadmin@keytour.com') {
             return next(new CustomError('Cannot remove role from Super Admin', 400));
         }
-
+if(!staff.role){
+    return next(new CustomError('this staff member has no role', 400));
+}
         // Remove the role (set to null)
         staff.role = null;
         staff.updatedBy = req.user._id;
