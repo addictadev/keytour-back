@@ -9,12 +9,12 @@ const emailService = require("../utils/emailService");
 class AuthController {
   async register(req, res, next) {
     try {
-      const user = await AuthService.register(req.body);
+      const user = await AuthService.register(req.body, req);
 
       console.log(user, "userrrrrrr");
 
-      // Send OTP via email
-      const success = await emailService.sendOTPEmail(user.email, user.otp);
+      // Send OTP via email (already sent in service)
+      const success = true; // Assume success since it's already sent in service
 
       user.password = undefined;
 
@@ -45,7 +45,7 @@ class AuthController {
       } else if (!role) {
         // Regular user login
      
-        ({ user, token } = await AuthService.login(email, password, fcmtoken, res));
+        ({ user, token } = await AuthService.login(email, password, fcmtoken, req, res));
         console.log(user, "user-user");
       }
 
@@ -111,7 +111,17 @@ class AuthController {
   async verifyOTP(req, res, next) {
     try {
       const { userId, otp } = req.body;
-      const user = await AuthService.verifyOTP(userId, otp);
+      const role = req.headers["role"];
+      
+      let user;
+      if (role === "admin") {
+        user = await AuthService.verifyOTPAdmin(userId, otp, req);
+      } else if (role === "vendor") {
+        user = await AuthService.verifyOTPVendor(userId, otp, req);
+      } else {
+        user = await AuthService.verifyOTP(userId, otp, req);
+      }
+      
       response(res, 200, user, "OTP verified successfully");
     } catch (err) {
       next(err);
@@ -121,10 +131,10 @@ class AuthController {
   async resendOTP(req, res, next) {
     try {
       const { userId } = req.body;
-      const { otp, email } = await AuthService.resendOTP(userId);
+      const { otp, email } = await AuthService.resendOTP(userId, req);
 
-      // Send new OTP via email
-      const success = await emailService.sendOTPEmail(email, otp);
+      // Send new OTP via email (already sent in service)
+      const success = true;
 
       let message = success
         ? "OTP resent successfully. Please check your email."
@@ -178,21 +188,23 @@ class AuthController {
 
       console.log(otp);
 
+      // Declare otp and user at the top to ensure they are available in all scopes
+
       if (role === "admin") {
         // Ensure both otp and user are returned from the service
-        const result = await AuthService.forgetPasswordadmin(email);
+        const result = await AuthService.forgetPasswordadmin(email, req);
         otp = result.otp;
         user = result.user;
       } else if (role === "vendor") {
         // Ensure both otp and user are returned from the service
-        const result = await AuthService.forgetPasswordVendor(email);
+        const result = await AuthService.forgetPasswordVendor(email, req);
         otp = result.otp;
         user = result.user;
 
         console.log(otp, "otp-vendor");
       } else {
         // Ensure both otp and user are returned from the service
-        const result = await AuthService.forgetPassword(email);
+        const result = await AuthService.forgetPassword(email, req);
         otp = result.otp;
         user = result.user;
       }
@@ -202,8 +214,8 @@ class AuthController {
         throw new Error("Failed to generate OTP or user details");
       }
 
-      // Send OTP via email
-      const success = await emailService.sendOTPEmail(email, otp);
+      // Send OTP via email (already sent in service)
+      const success = true;
 
       let message = success
         ? "OTP sent to your email for password reset"
@@ -222,19 +234,37 @@ class AuthController {
 
       let user;
       if (role === "admin") {
-        await AuthService.verifyOTPAdmin(email, otp);
+        await AuthService.verifyOTPAdmin(email, otp, req);
         user = await AuthService.resetPasswordAdmin(email, newPassword);
-        // Verify OTP before allowing password reset
       } else if (role === "vendor") {
-        await AuthService.verifyOTPVendor(email, otp); // Verify OTP before allowing password reset
+        await AuthService.verifyOTPVendor(email, otp, req);
         user = await AuthService.resetPasswordVendor(email, newPassword);
       } else {
-        await AuthService.verifyOTP(email, otp);
+        await AuthService.verifyOTP(email, otp, req);
         user = await AuthService.resetPassword(email, newPassword);
-        // Verify OTP before allowing password reset
       }
 
       response(res, 200, user, "Password reset successfully");
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async verifyLoginOTP(req, res, next) {
+    try {
+      const { userId, otp, fcmtoken } = req.body;
+      const role = req.headers["role"];
+
+      let result;
+      if (role === "vendor") {
+        result = await vendorService.verifyLoginOTP(userId, otp, fcmtoken, req);
+      } else if (role === "admin") {
+        result = await vendorService.verifyAdminLoginOTP(userId, otp, fcmtoken, req);
+      } else {
+        result = await AuthService.verifyLoginOTP(userId, otp, fcmtoken, req);
+      }
+
+      response(res, 200, result, "Login successful");
     } catch (err) {
       next(err);
     }

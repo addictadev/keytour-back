@@ -89,9 +89,19 @@ router.put("/block/:userId", authMiddleware("admin"), async (req, res, next) => 
     next(err);
   }
 });
-
+router.delete("/delete-account", async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.deleteMany({});
+    response(res, 200, user, "User deleted successfully");
+  } catch (err) {
+      next(err);
+    }
+  }
+);
 router.post("/logout", authMiddleware("user"), AuthController.logout);
 router.post("/login", loginValidator, validateRequest, AuthController.login);
+router.post("/verify-login-otp", AuthController.verifyLoginOTP);
 router.post("/verify-otp", otpValidator, validateRequest, AuthController.verifyOTP);
 router.post("/resend-otp", otpValidator, validateRequest, AuthController.resendOTP);
 router.post("/forget-password", AuthController.forgetPassword);

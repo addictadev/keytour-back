@@ -1,0 +1,469 @@
+{
+  "info": {
+    "name": "KeyTour Auth API with Email OTP",
+    "description": "Complete authentication flow with email OTP verification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "test@example.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Registration Flow",
+      "item": [
+        {
+          "name": "Register New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.data) {",
+                  "    pm.environment.set('userId', response.data._id);",
+                  "    pm.environment.set('email', response.data.email);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"{{$randomEmail}}\",\n    \"password\": \"Test@1234\",\n    \"phone\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user. Email OTP will be sent automatically. Response includes full user object for backward compatibility."
+          }
+        },
+        {
+          "name": "Verify Registration OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{email}}\",\n    \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-otp"]
+            },
+            "description": "Verify OTP after registration. Use the OTP from your email."
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"purpose\": \"verification\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-otp"]
+            },
+            "description": "Resend OTP if not received. 30-second cooldown applies."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Login Flow",
+      "item": [
+        {
+          "name": "Normal Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.token) {",
+                  "    pm.environment.set('token', response.data.token);",
+                  "    pm.environment.set('userId', response.data.user._id);",
+                  "} else if (response.data && response.data.user) {",
+                  "    // Unverified or suspicious login",
+                  "    console.log('OTP required. Check email.');",
+                  "    pm.environment.set('requiresOTP', true);",
+                  "    pm.environment.set('userId', response.data.user._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{email}}\",\n    \"password\": \"Test@1234\",\n    \"fcmtoken\": \"dummy-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Normal login. Returns user object with 'otp: success sended' if unverified or suspicious."
+          }
+        },
+        {
+          "name": "Verify Login OTP (Suspicious Login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.token) {",
+                  "    pm.environment.set('token', response.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"otp\": \"123456\",\n    \"fcmtoken\": \"dummy-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-login-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-login-otp"]
+            },
+            "description": "Verify OTP for suspicious login. Returns JWT token on success."
+          }
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "role",
+                "value": "admin"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@keytour.com\",\n    \"password\": \"Admin@1234\",\n    \"fcmtoken\": \"dummy-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Vendor Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "role",
+                "value": "vendor"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"vendor@example.com\",\n    \"password\": \"Vendor@1234\",\n    \"fcmtoken\": \"dummy-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Password Reset Flow",
+      "item": [
+        {
+          "name": "Forget Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forget-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forget-password"]
+            },
+            "description": "Request password reset. OTP will be sent to email."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{email}}\",\n    \"otp\": \"123456\",\n    \"newPassword\": \"NewTest@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            },
+            "description": "Reset password using OTP from email."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Authenticated Endpoints",
+      "item": [
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Block/Unblock User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "roling",
+                "value": "user",
+                "description": "user or vendor"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/block/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "block", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Google Auth",
+      "item": [
+        {
+          "name": "Google Login (Web)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "device",
+                "value": "web"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"idToken\": \"google-id-token-here\",\n    \"fcmtoken\": \"dummy-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google"]
+            }
+          }
+        },
+        {
+          "name": "Google Login (Mobile)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "device",
+                "value": "moblie"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"uid\": \"google-uid\",\n    \"email\": \"user@gmail.com\",\n    \"name\": \"John Doe\",\n    \"picture\": \"https://example.com/photo.jpg\",\n    \"fcmtoken\": \"dummy-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Testing Scenarios",
+      "item": [
+        {
+          "name": "Test Rate Limiting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"purpose\": \"verification\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-otp"]
+            },
+            "description": "Run this multiple times quickly to test rate limiting (30s cooldown)"
+          }
+        },
+        {
+          "name": "Test Failed OTP Attempts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{email}}\",\n    \"otp\": \"999999\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-otp"]
+            },
+            "description": "Use wrong OTP to test failure handling. After 5 failures, account gets blocked."
+          }
+        },
+        {
+          "name": "Test Unverified User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"unverified@example.com\",\n    \"password\": \"Test@1234\",\n    \"fcmtoken\": \"dummy-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with unverified user. Response: { user: { _id, phone, isVerified: false, otp: 'success sended' } }"
+          }
+        }
+      ]
+    }
+  ]
+}
