@@ -5,14 +5,18 @@ const AuthMiddleware = require('../../V2/middleware/authMiddleware');
 const PermissionMiddleware = require('../../V2/middleware/permissionMiddleware');
 
 const router = express.Router();
-router.use(AuthMiddleware.requireAuth({
-    requireEmailVerification: false,
-    validateSession: true,
-    allowedUserTypes: ['staff']
-}));
+// router.use(AuthMiddleware.requireAuth({
+//     requireEmailVerification: false,
+//     validateSession: true,
+//     allowedUserTypes: ['staff']
+// }));
 router.post('/cancel-booking', auth(), BookingController.cancelBookingController);
 router
-    .route('/').get(auth('vendor',"admin"),PermissionMiddleware.attachPermissionInfo, PermissionMiddleware.requirePermissions('read:permissions', 'read:roles'),BookingController.getallbooking)
+    .route('/').get(auth('vendor',"admin"),AuthMiddleware.requireAuth({
+        requireEmailVerification: false,
+        validateSession: true,
+        allowedUserTypes: ['staff']
+    }),PermissionMiddleware.attachPermissionInfo, PermissionMiddleware.requirePermissions('read:permissions', 'read:roles'),BookingController.getallbooking)
     .post(auth('user',"vendor"), BookingController.createBooking).delete(BookingController.deletemanyBooking);
 
 router
@@ -21,7 +25,11 @@ router
 
 router
     .route('/:id/cancel')
-    .post(auth('vendor', 'admin'),PermissionMiddleware.attachPermissionInfo, PermissionMiddleware.requirePermissions('read:permissions', 'read:roles'), BookingController.cancelBooking);
+    .post(auth('vendor', 'admin'),AuthMiddleware.requireAuth({
+        requireEmailVerification: false,
+        validateSession: true,
+        allowedUserTypes: ['staff']
+    }),PermissionMiddleware.attachPermissionInfo, PermissionMiddleware.requirePermissions('read:permissions', 'read:roles'), BookingController.cancelBooking);
     router
     .route('/:id')
     .get(BookingController.getBookingById)
