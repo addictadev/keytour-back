@@ -2,7 +2,7 @@ const sgMail = require('@sendgrid/mail');
 
 class EmailService {
     constructor() {
-        sgMail.setApiKey('o9D8UlKPSEGE_s1WpTE_rwSG.o9D8UlKPSEGE_s1WpTE_rw.o_tEkx3QzjFyOPH5q5gqpOLlmuhtGbHfBLfQpSfbZyo');
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
         // sgMail.setDataResidency('eu');
     }
 
@@ -114,7 +114,6 @@ class EmailService {
 
     createSuspiciousLoginHTML(otp, deviceInfo, expiryMinutes = 5) {
         const { browser = 'Unknown', os = 'Unknown', location = 'Unknown', ip = 'Unknown' } = deviceInfo;
-        
         return `
             <!DOCTYPE html>
             <html lang="en">
@@ -390,10 +389,35 @@ class EmailService {
         `;
     }
 
+    createVendorWelcomeHTML(vendor) {
+        return `
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #17a2b8;">
+                <h2 style="color: #17a2b8;">Welcome to KeyTour - Application Received!</h2>
+                <p>Dear ${vendor.name},</p>
+                <p>Thank you for registering as a vendor with KeyTour. We have successfully received your application.</p>
+                <p><strong>What happens next?</strong></p>
+                <ul>
+                    <li>Our team will review your application within 24-48 hours</li>
+                    <li>You will receive an email notification once your application is reviewed</li>
+                    <li>If approved, you'll be able to log in and start creating tours</li>
+                </ul>
+                <p><strong>Your Application Details:</strong></p>
+                <ul>
+                    <li><strong>Company Name:</strong> ${vendor.company_name}</li>
+                    <li><strong>Email:</strong> ${vendor.email}</li>
+                    <li><strong>Status:</strong> Pending Review</li>
+                </ul>
+                <p>If you have any questions, please don't hesitate to contact our support team.</p>
+                <p>We look forward to potentially having you as part of our vendor network!</p>
+                <p>Best regards,<br>The KeyTour Team</p>
+            </div>
+        `;
+    }
+
     async sendEmail(to, subject, html) {
         const msg = {
             to,
-            from: 'mizoomizoo161@gmail.com', // This must be a verified sender in SendGrid
+            from: 'admin@keytor.com', // This must be a verified sender in SendGrid
             subject,
             html,
         };

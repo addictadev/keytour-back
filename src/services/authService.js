@@ -77,11 +77,12 @@ console.log(otpResult);
         deviceInfo
       );
       
-      // Return response similar to unverified user for consistency
-      return response(
-        res,
-        200,
-        { 
+      // Return data for controller to handle (not a direct response)
+      return {
+        user: null,
+        token: null,
+        suspiciousLogin: true,
+        otpData: { 
           user: { 
             _id: user._id, 
             phone: user.phone, 
@@ -89,12 +90,13 @@ console.log(otpResult);
             otp: otpResult.otp,
             requiresOTP: true,
             reason: isNewDevice ? 'new_device' : 'unusual_activity'
-          }
-        },
-        isNewDevice 
-          ? `New device detected. OTP sent to your email (${otpResult.email})`
-          : `Unusual activity detected. OTP sent to your email (${otpResult.email})`
-      );
+          },
+          message: isNewDevice 
+            ? `New device detected. OTP sent to your email (${otpResult.email})`
+            : `Unusual activity detected. OTP sent to your email (${otpResult.email})`,
+          email: otpResult.email
+        }
+      };
     }
 
     // Update the user's login status and FCM token

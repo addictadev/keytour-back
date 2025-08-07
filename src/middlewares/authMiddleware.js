@@ -135,7 +135,7 @@ console.log(decoded)
 
             // Determine which model (table) to query based on the role from the header
             if (role === 'admin') {
-                user = await Admin.findById(decoded.id).select('-password');
+             return next()
             } else if (role === 'vendor') {
                 user = await Vendor.findById(decoded.id).select('-password');
 

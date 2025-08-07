@@ -12,6 +12,7 @@
     "clear:db:list": "node clear-database.js --list",
     "start": "nodemon index.js",
     "seed": "node seeder/seed.js",
+    "seed:settings": "node seeder/seedAppSettings.js",
     "dev": "nodemon index.js"
   },
   "author": "",

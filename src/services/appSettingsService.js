@@ -19,7 +19,7 @@ class AppSettingsService {
     async getAppSettings() {
         const appSettings = await AppSettings.findOne(); // Assuming there's only one settings document
         if (!appSettings) {
-            throw new CustomError('App Settings not found', 404);
+            throw new CustomError('App Settings not found', 400);
         }
         return appSettings;
     }

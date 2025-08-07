@@ -44,8 +44,14 @@ class AuthController {
         ({ user, token } = await vendorService.loginAdmin(email, password, fcmtoken));
       } else if (!role) {
         // Regular user login
-     
-        ({ user, token } = await AuthService.login(email, password, fcmtoken, req, res));
+        const loginResult = await AuthService.login(email, password, fcmtoken, req, res);
+        
+        // Check if this is a suspicious login that requires OTP
+        if (loginResult.suspiciousLogin) {
+          return response(res, 200, loginResult.otpData, loginResult.otpData.message);
+        }
+        
+        ({ user, token } = loginResult);
         console.log(user, "user-user");
       }
 

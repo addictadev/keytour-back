@@ -1,6 +1,7 @@
 const VendorService = require('../services/vendorService');
 const response = require('../utils/response');
 const catchAsync = require('../utils/catchAsync');
+const EmailService = require('../utils/emailService');
 
 
 class VendorController {
@@ -18,6 +19,18 @@ class VendorController {
             };
 
             const vendor = await VendorService.createVendor(vendorData);
+            
+            // Send welcome email to the new vendor
+            try {
+                const subject = 'Welcome to KeyTour - Application Received';
+                const html = EmailService.createVendorWelcomeHTML(vendor);
+                await EmailService.sendEmail(vendor.email, subject, html);
+                console.log(`Welcome email sent to vendor: ${vendor.email}`);
+            } catch (emailError) {
+                // Log email error but don't fail the registration
+                console.error(`Failed to send welcome email to vendor: ${vendor.email}`, emailError);
+            }
+            
             response(res, 201, vendor, 'Vendor created successfully');
         } catch (err) {
             next(err);
