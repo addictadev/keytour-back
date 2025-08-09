@@ -108,7 +108,7 @@ const authMiddleware = (...allowedRoles) => {
         try {
             // Extract the role from request header
             const role = req.headers['role'];
-
+console.log(role==='user')
             // Check if the role is provided in the header
             // if (!role) {
             //     return next(new CustomError('Role is required in the request header.', 400));
@@ -140,6 +140,7 @@ console.log(decoded)
                 user = await Vendor.findById(decoded.id).select('-password');
 
             } else if (role === 'user') {
+                console.log("user")
                 user = await User.findById(decoded.id).select('-password');
                 
             } else {
@@ -154,6 +155,8 @@ console.log(decoded)
 
             // Check if the user's role is allowed to access the route
             if (!allowedRoles.includes(user.defaultrole)) {
+                console.log("user.defaultrole",user.defaultrole)
+                console.log("allowedRoles",allowedRoles)
                 return next(new CustomError('You do not have permission to access this route.', 403));
             }
 
