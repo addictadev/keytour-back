@@ -292,9 +292,12 @@ class BookingService {
         return false;
     }
 
-    // Cancel a booking - UNIFIED
+    // Cancel a booking - send emails to user, vendor, and admins
     async cancelBooking(bookingId, cancellerUser) {
-        const booking = await Booking.findById(bookingId).populate('user').populate('vendor').populate('tour');
+        const booking = await Booking.findById(bookingId)
+            .populate('user')
+            .populate('vendor')
+            .populate('tour');
         if (!booking) {
             throw new CustomError('Booking not found', 404);
         }
@@ -310,35 +313,66 @@ class BookingService {
         if (booking.status.startsWith('cancel')) {
             throw new CustomError('Booking has already been canceled.', 400);
         }
-        
-        let html, subject, recipientEmail;
+
+        const cancelledBy = isUserCancelling ? 'user' : (isVendorCancelling ? 'vendor' : 'admin');
 
         if (isUserCancelling) {
             booking.status = 'canceled';
-            // Notify vendor
-            if(booking.vendor){
-                 html = emailService.createCancellationNotificationForVendorHTML(booking.vendor, booking.user, booking);
-                subject = `Booking Cancellation for ${booking.tour.title}`;
-                recipientEmail = booking.vendor.email;
-            }
-
-        } else { // Vendor or Admin is cancelling
+        } else {
             booking.status = 'canceledbyvendor';
-            // Notify user
-            html = emailService.createCancellationNotificationForUserHTML(booking.user, booking);
-            subject = `Your Booking for ${booking.tour.title} has been cancelled`;
-            recipientEmail = booking.user.email;
         }
 
         await booking.save({ validateBeforeSave: false });
 
-        // Send email notification
-        if(html && subject && recipientEmail){
-            try {
-                await emailService.sendEmail(recipientEmail, subject, html);
-            } catch (emailError) {
-                console.error('Failed to send booking cancellation email:', emailError);
+        // Collect email send promises
+        const emailPromises = [];
+
+        try {
+            // 1) Notify User
+            if (isUserCancelling) {
+                // Confirmation to user who cancelled
+                const userHtml = emailService.createUserCancellationConfirmationHTML(booking.user, booking);
+                emailPromises.push(
+                    emailService.sendEmail(booking.user.email, `Your Booking for ${booking.tour.title} has been cancelled`, userHtml)
+                );
+            } else {
+                // Vendor/Admin cancelled → notify user
+                const userHtml = emailService.createCancellationNotificationForUserHTML(booking.user, booking);
+                emailPromises.push(
+                    emailService.sendEmail(booking.user.email, `Your Booking for ${booking.tour.title} has been cancelled`, userHtml)
+                );
             }
+
+            // 2) Notify Vendor (if exists)
+            if (booking.vendor) {
+                if (isUserCancelling) {
+                    // User cancelled → existing template to vendor
+                    const vendorHtml = emailService.createCancellationNotificationForVendorHTML(booking.vendor, booking.user, booking);
+                    emailPromises.push(
+                        emailService.sendEmail(booking.vendor.email, `Booking Cancellation for ${booking.tour.title}`, vendorHtml)
+                    );
+                } else {
+                    // Vendor/Admin cancelled → notify vendor as a record
+                    const vendorHtml = emailService.createVendorCancellationNotificationHTML(booking.vendor, booking.user, booking, cancelledBy);
+                    emailPromises.push(
+                        emailService.sendEmail(booking.vendor.email, `Booking Cancelled (${cancelledBy}) - ${booking.tour.title}`, vendorHtml)
+                    );
+                }
+            }
+
+            // 3) Notify Admins
+            const admins = await Admin.find({}, 'name email');
+            for (const adminUser of admins) {
+                const adminHtml = emailService.createAdminCancellationNotificationHTML(adminUser, booking.user, booking.vendor, booking, cancelledBy);
+                emailPromises.push(
+                    emailService.sendEmail(adminUser.email, `Booking Cancelled (${cancelledBy})`, adminHtml)
+                );
+            }
+
+            // Execute all email sends in parallel
+            await Promise.allSettled(emailPromises);
+        } catch (emailError) {
+            console.error('Failed to send one or more booking cancellation emails:', emailError);
         }
 
         return booking;

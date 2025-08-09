@@ -329,6 +329,60 @@ class EmailService {
         `;
     }
 
+    // Sent to the user when they cancel their own booking (confirmation)
+    createUserCancellationConfirmationHTML(user, booking) {
+        return `
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #dc3545;">
+                <h2 style="color: #dc3545;">Your Booking Has Been Cancelled</h2>
+                <p>Dear ${user.name},</p>
+                <p>This is a confirmation that you cancelled your booking for the tour: <strong>${booking.tour.title}</strong>.</p>
+                <p>If this was a mistake, please contact support immediately.</p>
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                    <li><strong>Booking ID:</strong> ${booking._id}</li>
+                    <li><strong>Tour:</strong> ${booking.tour.title}</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    // Sent to the vendor when a booking is cancelled by vendor or admin (notification)
+    createVendorCancellationNotificationHTML(vendor, user, booking, cancelledBy) {
+        const actor = cancelledBy === 'vendor' ? 'you (the provider)' : cancelledBy;
+        return `
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #ffc107;">
+                <h2 style="color: #333;">Booking Cancellation Notice</h2>
+                <p>Hello ${vendor.name},</p>
+                <p>The booking for the tour: <strong>${booking.tour.title}</strong> by <strong>${user.name}</strong> has been cancelled by <strong>${actor}</strong>.</p>
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                    <li><strong>Booking ID:</strong> ${booking._id}</li>
+                    <li><strong>User:</strong> ${user.name} (${user.email})</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    // Sent to admins for any cancellation event
+    createAdminCancellationNotificationHTML(admin, user, vendor, booking, cancelledBy) {
+        return `
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #ddd;">
+                <h2 style="color: #333;">Booking Cancelled (${cancelledBy})</h2>
+                <p>Hello ${admin.name},</p>
+                <p>A booking has been cancelled in the system.</p>
+                <p><strong>Cancellation By:</strong> ${cancelledBy}</p>
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                    <li><strong>Booking ID:</strong> ${booking._id}</li>
+                    <li><strong>User:</strong> ${user?.name || 'N/A'} (${user?.email || 'N/A'})</li>
+                    <li><strong>Vendor:</strong> ${vendor?.name || 'N/A'} (${vendor?.email || 'N/A'})</li>
+                    <li><strong>Tour:</strong> ${booking.tour.title}</li>
+                    <li><strong>Status:</strong> ${booking.status}</li>
+                </ul>
+            </div>
+        `;
+    }
+
     createPaymentSuccessHTML(user, booking) {
         return `
             <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #28a745;">

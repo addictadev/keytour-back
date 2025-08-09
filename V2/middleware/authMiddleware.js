@@ -326,9 +326,7 @@ class AuthMiddleware {
         } = options;
 
         return async (req, res, next) => {
-            if(req.headers['role']==='user' || req.headers['role']==='vendor' || req.headers['role']==='admin'){
-                return next()
-            }
+
             try {
                 // Step 1: Basic authentication
                 await new Promise((resolve, reject) => {

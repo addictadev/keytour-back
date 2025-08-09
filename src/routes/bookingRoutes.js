@@ -12,11 +12,7 @@ const router = express.Router();
 // }));
 router.post('/cancel-booking', auth('user','vendor','admin'), BookingController.cancelBookingController);
 router
-    .route('/').get(auth('vendor',"admin"),AuthMiddleware.requireAuth({
-        requireEmailVerification: false,
-        validateSession: true,
-        allowedUserTypes: ['staff']
-    }),PermissionMiddleware.attachPermissionInfo, PermissionMiddleware.requirePermissions('read:permissions', 'read:roles'),BookingController.getallbooking)
+    .route('/').get(auth('vendor',"admin"),BookingController.getallbooking)
     .post(auth('user',"vendor"), BookingController.createBooking).delete(BookingController.deletemanyBooking);
 
 router
@@ -25,15 +21,11 @@ router
 
 router
     .route('/:id/cancel')
-    .post(auth('vendor', 'admin','user'),AuthMiddleware.requireAuth({
-        requireEmailVerification: false,
-        validateSession: true,
-        allowedUserTypes: ['staff']
-    }),PermissionMiddleware.attachPermissionInfo, PermissionMiddleware.requirePermissions('read:permissions', 'read:roles'), BookingController.cancelBooking);
+    .post(auth('vendor', 'admin','user'), BookingController.cancelBooking);
     router
     .route('/:id')
     .get(BookingController.getBookingById)
     .delete(BookingController.deleteBooking)
-    .patch(auth('vendor', 'admin'),PermissionMiddleware.attachPermissionInfo, PermissionMiddleware.requirePermissions('read:permissions', 'read:roles'), BookingController.updateBooking);
+    .patch(auth('vendor', 'admin'), BookingController.updateBooking);
  
 module.exports = router;
